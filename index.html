@@ -1,114 +1,165 @@
 <!DOCTYPE html>
-<html lang="uz">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mikro-G'ildirak</title>
+    <title>G'anining G'ildiragi</title>
     <style>
-        /* DIZAYN QISMI */
-        body {
-            background-color: #1a1a2e;
-            color: white;
-            font-family: sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
+        /* ASOSIY FON VA DIZAYN */
+        body { 
+            display: flex; flex-direction: column; align-items: center; 
+            background: radial-gradient(circle, #1b2735 0%, #090a0f 100%); 
+            color: white; font-family: 'Arial Black', sans-serif; 
+            min-height: 100vh; margin: 0; overflow-x: hidden;
         }
-        .container { position: relative; width: 320px; height: 320px; }
-        canvas { width: 100%; height: 100%; border-radius: 50%; border: 5px solid #00d4ff; }
-        #btn {
-            margin-top: 20px;
-            padding: 15px 30px;
-            background: #00d4ff;
-            border: none;
-            border-radius: 25px;
-            font-weight: bold;
-            cursor: pointer;
+        h1 { 
+            margin-top: 20px; color: #00d2ff; 
+            text-shadow: 0 0 20px #00d2ff, 0 0 40px #00d2ff; 
+            font-size: 35px; text-transform: uppercase;
         }
-        .pointer {
-            position: absolute;
-            top: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0; 
-            height: 0; 
-            border-left: 15px solid transparent;
-            border-right: 15px solid transparent;
-            border-top: 30px solid red;
-            z-index: 5;
+        /* G'ILDIRAK ATROFI */
+        .wheel-container { position: relative; margin-top: 20px; }
+        canvas { 
+            border: 12px solid #ffffff; border-radius: 50%; 
+            box-shadow: 0 0 50px rgba(0, 210, 255, 0.6); 
         }
-        #text { margin-top: 15px; font-size: 20px; color: #ffeb3b; text-align: center; }
+        /* KO'RSATKICH (TIL) */
+        .arrow { 
+            position: absolute; top: -10px; left: 50%; 
+            transform: translateX(-50%); width: 0; height: 0; 
+            border-left: 25px solid transparent; border-right: 25px solid transparent; 
+            border-top: 45px solid #ff0000; z-index: 10;
+            filter: drop-shadow(0 5px 10px black);
+        }
+        /* TUGMA */
+        button { 
+            margin-top: 25px; padding: 18px 60px; font-size: 26px; 
+            cursor: pointer; border-radius: 50px; border: none; 
+            background: linear-gradient(45deg, #00d2ff, #3a7bd5); 
+            color: white; font-weight: bold; 
+            box-shadow: 0 0 25px rgba(0, 210, 255, 0.5); 
+            transition: 0.3s ease; text-transform: uppercase;
+        }
+        button:hover { transform: scale(1.05); box-shadow: 0 0 40px #00d2ff; }
+        button:active { transform: scale(0.9); }
+        /* NATIJA CHIQADIGAN OYNA */
+        #result-box { 
+            margin: 20px; padding: 30px; background: rgba(0, 0, 0, 0.8); 
+            border-radius: 25px; border: 3px solid #00d2ff; 
+            width: 85%; text-align: center; display: none; 
+            animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 0 30px #00d2ff;
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        #res-title { font-size: 32px; color: #f1c40f; margin-bottom: 10px; }
+        #res-text { font-size: 22px; color: #ffffff; line-height: 1.4; }
     </style>
 </head>
 <body>
-
-    <h2 style="color: #00d4ff;">🔬 Mikrobiologiya</h2>
-    <div id="text">Aylantirishni bosing</div>
-
-    <div class="container">
-        <div class="pointer"></div>
-        <canvas id="wheel" width="320" height="320"></canvas>
+    <h1>G'anining G'ildiragi</h1>
+    <div class="wheel-container">
+        <div class="arrow"></div>
+        <canvas id="wheel" width="380" height="380"></canvas>
+    </div>
+    <button onclick="spin()">G'IZZLATING!</button>
+    <div id="result-box">
+        <div id="res-title"></div>
+        <div id="res-text"></div>
     </div>
 
-    <button id="btn" onclick="spinWheel()">AYLANTIRISH</button>
-
     <script>
-        /* MANTIQ QISMI (JAVASCRIPT) */
         const canvas = document.getElementById('wheel');
         const ctx = canvas.getContext('2d');
-        const sectors = ["Bakteriya", "Virus", "Zamburug'", "Antibiotik", "Mikroskop", "Gigiyena", "DNK", "Vaksina"];
-        const colors = ["#2ecc71", "#e74c3c", "#f1c40f", "#9b59b6", "#3498db", "#e67e22", "#1abc9c", "#95a5a6"];
         
+        const sectors = [
+            { icon: "🧨", type: "task", title: "SHART!", text: "Siz dinamitga tushdingiz! Shart bajarasiz!" },
+            { icon: "🎁", type: "win", title: "G'OLIB!", text: "Sizga maxsus sovg'a bor!" },
+            { icon: "❓", type: "q" }, { icon: "❓", type: "q" }, { icon: "❓", type: "q" },
+            { icon: "❓", type: "q" }, { icon: "❓", type: "q" }, { icon: "❓", type: "q" },
+            { icon: "❓", type: "q" }, { icon: "❓", type: "q" }
+        ];
+
+        let questions = [
+            "Bakteriyalarning qanday shakllari bor?",
+            "Viruslar tirikmi yoki o'likmi?",
+            "Antibiotik nima uchun ishlatiladi?",
+            "Mikroskopni kim ixtiro qilgan?",
+            "Vaksina qanday yordam beradi?",
+            "Immunitet turlarini ayting.",
+            "Zamburug'lar qayerda ko'p uchraydi?",
+            "Laboratoriya xavfsizlik qoidalari?",
+            "Antigen nima?",
+            "Mikroblarning foydasi bormi?"
+        ];
+
+        questions.sort(() => Math.random() - 0.5);
+
+        const colors = ["#e74c3c", "#2ecc71", "#00d2ff", "#9b59b6", "#f1c40f", "#1abc9c", "#e67e22", "#3498db", "#ff006e", "#3a86ff"];
         let currentAngle = 0;
-        const arc = (2 * Math.PI) / sectors.length;
 
         function draw() {
-            sectors.forEach((name, i) => {
-                const angle = currentAngle + i * arc;
-                ctx.fillStyle = colors[i];
+            const arc = Math.PI * 2 / 10;
+            sectors.forEach((s, i) => {
                 ctx.beginPath();
-                ctx.moveTo(160, 160);
-                ctx.arc(160, 160, 160, angle, angle + arc);
-                ctx.lineTo(160, 160);
+                ctx.fillStyle = colors[i];
+                ctx.moveTo(190, 190);
+                ctx.arc(190, 190, 190, i * arc, (i + 1) * arc);
                 ctx.fill();
+                ctx.strokeStyle = "white";
+                ctx.lineWidth = 2;
                 ctx.stroke();
-
                 ctx.save();
-                ctx.translate(160 + Math.cos(angle + arc/2) * 100, 160 + Math.sin(angle + arc/2) * 100);
-                ctx.rotate(angle + arc/2 + Math.PI/2);
+                ctx.translate(190, 190);
+                ctx.rotate(i * arc + arc / 2);
                 ctx.fillStyle = "white";
-                ctx.font = "bold 12px Arial";
-                ctx.fillText(name, -ctx.measureText(name).width/2, 0);
+                ctx.font = "bold 42px serif";
+                ctx.textAlign = "center";
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = "black";
+                ctx.fillText(s.icon, 130, 15);
                 ctx.restore();
             });
         }
 
-        function spinWheel() {
-            let spinTime = 0;
-            let totalSpinTime = 3000 + Math.random() * 2000;
-            let speed = 0.2 + Math.random() * 0.2;
+        function spin() {
+            document.getElementById('result-box').style.display = 'none';
+            const spinAngle = Math.floor(Math.random() * 360) + 7200; 
+            currentAngle += spinAngle;
+            canvas.style.transition = 'transform 5s cubic-bezier(0.1, 0, 0, 1)';
+            canvas.style.transform = `rotate(${currentAngle}deg)`;
 
-            function animate() {
-                spinTime += 20;
-                if (spinTime < totalSpinTime) {
-                    currentAngle += speed;
-                    speed *= 0.98; // Sekinlashish
-                    draw();
-                    requestAnimationFrame(animate);
+            setTimeout(() => {
+                const normalizedAngle = (currentAngle % 360);
+                const index = Math.floor((360 - (normalizedAngle % 360)) / 36) % 10;
+                const result = sectors[index];
+                
+                const box = document.getElementById('result-box');
+                const title = document.getElementById('res-title');
+                const text = document.getElementById('res-text');
+
+                if (result.type === "q") {
+                    if (questions.length > 0) {
+                        title.innerText = "SAVOL:";
+                        title.style.color = "#00d2ff";
+                        text.innerText = questions.pop(); 
+                    } else {
+                        title.innerText = "TAMOM!";
+                        text.innerText = "Savollar qolmadi!";
+                    }
                 } else {
-                    const finalAngle = (currentAngle * 180 / Math.PI + 90) % 360;
-                    const sectorIndex = Math.floor((360 - finalAngle) / (360 / sectors.length)) % sectors.length;
-                    document.getElementById('text').innerText = "Tanlandi: " + sectors[sectorIndex];
+                    title.innerText = result.title;
+                    title.style.color = result.type === "task" ? "#e74c3c" : "#2ecc71";
+                    text.innerText = result.text;
                 }
-            }
-            animate();
+                box.style.display = 'block';
+            }, 5200);
         }
-
         draw();
     </script>
 </body>
 </html>
+
 
