@@ -3,147 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>G'anining G'ildiragi</title>
+    <title>G'ayrat TOG'O O'yinlari</title>
     <style>
+        :root { --neon-blue: #00d2ff; --neon-purple: #bc13fe; --neon-green: #2ecc71; }
         body { 
             display: flex; flex-direction: column; align-items: center; 
-            background: radial-gradient(circle, #1b2735 0%, #090a0f 100%); 
-            color: white; font-family: 'Arial Black', sans-serif; 
-            min-height: 100vh; margin: 0; overflow: hidden;
+            background: #050505; color: white; font-family: 'Arial Black', sans-serif; 
+            min-height: 100vh; margin: 0; overflow-x: hidden;
         }
-        h1 { margin-top: 20px; color: #00d2ff; text-shadow: 0 0 20px #00d2ff; font-size: 30px; text-transform: uppercase; }
+        /* MENYU */
+        .menu { display: flex; gap: 15px; margin-top: 20px; z-index: 100; }
+        .menu-btn { 
+            padding: 12px 25px; border: 2px solid var(--neon-blue); background: transparent; 
+            color: white; border-radius: 15px; cursor: pointer; transition: 0.4s; font-weight: bold;
+        }
+        .active-btn { background: var(--neon-blue); color: #000; box-shadow: 0 0 20px var(--neon-blue); }
+
+        /* O'YINLAR */
+        #wheel-game, #memory-game { width: 100%; display: flex; flex-direction: column; align-items: center; padding-top: 20px; }
+        #memory-game { display: none; }
+
+        /* G'ILDIRAK */
         .wheel-container { position: relative; margin-top: 10px; }
-        canvas { border: 10px solid #ffffff; border-radius: 50%; box-shadow: 0 0 50px rgba(0, 210, 255, 0.5); }
-        .arrow { 
-            position: absolute; top: -10px; left: 50%; 
-            transform: translateX(-50%); width: 0; height: 0; 
-            border-left: 20px solid transparent; border-right: 20px solid transparent; 
-            border-top: 40px solid #ff0000; z-index: 10;
+        canvas { border: 10px solid #fff; border-radius: 50%; box-shadow: 0 0 40px var(--neon-blue); }
+        .arrow { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 25px solid transparent; border-right: 25px solid transparent; border-top: 45px solid #ff0000; z-index: 10; }
+
+        /* G'AYRAT TOG'O (MEMORY) STILI */
+        .grid { 
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; 
+            padding: 20px; width: 95%; max-width: 450px; 
         }
-        button { 
-            margin-top: 20px; padding: 15px 50px; font-size: 24px; 
-            cursor: pointer; border-radius: 50px; border: none; 
-            background: linear-gradient(45deg, #00d2ff, #3a7bd5); 
-            color: white; font-weight: bold; box-shadow: 0 0 20px #00d2ff; transition: 0.3s;
+        .card { 
+            height: 90px; background: #121212; border: 2px solid var(--neon-purple); 
+            border-radius: 12px; display: flex; align-items: center; justify-content: center; 
+            font-size: 14px; font-weight: bold; cursor: pointer; text-align: center; color: var(--neon-purple);
+            transition: 0.3s;
         }
-        button:active { transform: scale(0.9); }
-        #result-box { 
-            margin: 15px; padding: 20px; background: rgba(0, 0, 0, 0.9); 
-            border-radius: 20px; border: 3px solid #00d2ff; 
-            width: 85%; text-align: center; display: none; 
-            animation: bounceIn 0.5s ease; box-shadow: 0 0 30px #00d2ff;
+        .card.flipped { background: var(--neon-purple); color: white; box-shadow: 0 0 15px var(--neon-purple); border-color: white; }
+        .card.matched { opacity: 0.3; cursor: default; transform: scale(0.9); }
+
+        button.action-btn { 
+            margin-top: 25px; padding: 18px 50px; font-size: 22px; border-radius: 50px; 
+            border: none; background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple)); 
+            color: white; font-weight: bold; box-shadow: 0 5px 20px rgba(188, 19, 254, 0.5); cursor: pointer;
         }
-        @keyframes bounceIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
-        #res-title { font-size: 28px; color: #f1c40f; margin-bottom: 5px; }
-        #res-text { font-size: 20px; color: #ffffff; }
+        #result-box { margin: 20px; padding: 25px; background: rgba(0,0,0,0.8); border: 2px solid var(--neon-blue); border-radius: 20px; width: 80%; text-align: center; display: none; box-shadow: 0 0 30px var(--neon-blue); }
     </style>
 </head>
 <body>
 
-    <h1>G'anining G'ildiragi</h1>
-    <div class="wheel-container">
-        <div class="arrow"></div>
-        <canvas id="wheel" width="370" height="370"></canvas>
-    </div>
-    <button onclick="spin()">G'IZZLATING!</button>
-
-    <div id="result-box">
-        <div id="res-title"></div>
-        <div id="res-text"></div>
+    <div class="menu">
+        <button id="btn1" class="menu-btn active-btn" onclick="showGame('wheel')">G'ildirak</button>
+        <button id="btn2" class="menu-btn" onclick="showGame('memory')">G'ayrat TOG'O</button>
     </div>
 
-    <audio id="spinSound" src="https://www.soundjay.com/misc/sounds/mechanical-clonk-1.mp3" preload="auto"></audio>
-    <audio id="winSound" src="https://www.soundjay.com/misc/sounds/magic-chime-01.mp3" preload="auto"></audio>
+    <div id="wheel-game">
+        <h1 style="color:var(--neon-blue); text-shadow: 0 0 10px var(--neon-blue);">G'anining G'ildiragi</h1>
+        <div class="wheel-container">
+            <div class="arrow"></div>
+            <canvas id="wheel" width="360" height="360"></canvas>
+        </div>
+        <button class="action-btn" onclick="spin()">G'IZZLATING!</button>
+        <div id="result-box">
+            <div id="res-title" style="font-size:28px; color:#f1c40f"></div>
+            <div id="res-text" style="font-size:20px;"></div>
+        </div>
+    </div>
+
+    <div id="memory-game">
+        <h1 style="color:var(--neon-purple); text-shadow: 0 0 10px var(--neon-purple);">G'ayrat TOG'O</h1>
+        <p style="color: #ccc;">Inglizcha tibbiy juftliklarni toping!</p>
+        <div class="grid" id="grid"></div>
+        <button class="action-btn" onclick="resetMemory()">YANGILASH</button>
+    </div>
+
+    <audio id="spinSound" src="https://www.soundjay.com/misc/sounds/mechanical-clonk-1.mp3"></audio>
+    <audio id="winSound" src="https://www.soundjay.com/misc/sounds/magic-chime-01.mp3"></audio>
 
     <script>
+        function showGame(type) {
+            document.getElementById('wheel-game').style.display = type === 'wheel' ? 'flex' : 'none';
+            document.getElementById('memory-game').style.display = type === 'memory' ? 'flex' : 'none';
+            document.getElementById('btn1').classList.toggle('active-btn', type === 'wheel');
+            document.getElementById('btn2').classList.toggle('active-btn', type === 'memory');
+        }
+
         const canvas = document.getElementById('wheel');
         const ctx = canvas.getContext('2d');
-        const spinSound = document.getElementById('spinSound');
-        const winSound = document.getElementById('winSound');
-        
-        // Dinamit 1-o'rinda, Sovg'a 6-o'rinda (qarama-qarshi)
         const sectors = [
-            { icon: "🧨", type: "task", title: "SHART!", text: "Siz dinamitga tushdingiz! Shart bajarasiz!" },
+            { icon: "🧨", type: "task", title: "SHART!", text: "Dinamit! Tezda bitta shart bajaring!" },
             { icon: "❓", type: "q" }, { icon: "❓", type: "q" }, { icon: "❓", type: "q" }, { icon: "❓", type: "q" },
-            { icon: "🎁", type: "win", title: "G'OLIB!", text: "Sizga maxsus sovg'a bor!" },
+            { icon: "🎁", type: "win", title: "G'OLIB!", text: "G'ayrat Tog'odan sizga sovg'a!" },
             { icon: "❓", type: "q" }, { icon: "❓", type: "q" }, { icon: "❓", type: "q" }, { icon: "❓", type: "q" }
         ];
-
-        let questions = [
-            "Bakteriyalarning qanday shakllari bor?", "Viruslar tirikmi yoki o'likmi?",
-            "Antibiotik nima uchun ishlatiladi?", "Mikroskopni kim ixtiro qilgan?",
-            "Vaksina qanday yordam beradi?", "Immunitet turlarini ayting.",
-            "Zamburug'lar qayerda ko'p uchraydi?", "Laboratoriya xavfsizlik qoidalari?",
-            "Antigen nima?", "Mikroblarning foydasi bormi?"
-        ];
-        questions.sort(() => Math.random() - 0.5);
-
-        const colors = ["#e74c3c", "#3498db", "#9b59b6", "#f1c40f", "#1abc9c", "#2ecc71", "#e67e22", "#34495e", "#ff006e", "#00d2ff"];
+        let questions = ["Bakteriya nima?", "Virus turlari?", "Vaksina nima?", "Immunitet?", "Antigen?", "Antibiotik?", "Mikroskop?", "Mikrob foydasi?", "Zamburug'?", "Laboratoriya?"];
         let currentAngle = 0;
+        const colors = ["#e74c3c", "#3498db", "#9b59b6", "#f1c40f", "#1abc9c", "#2ecc71", "#e67e22", "#34495e", "#ff006e", "#00d2ff"];
 
-        function draw() {
+        function drawWheel() {
             const arc = Math.PI * 2 / 10;
             sectors.forEach((s, i) => {
-                ctx.beginPath();
-                ctx.fillStyle = colors[i];
-                ctx.moveTo(185, 185);
-                ctx.arc(185, 185, 185, i * arc, (i + 1) * arc);
-                ctx.fill();
-                ctx.strokeStyle = "white";
-                ctx.stroke();
-                ctx.save();
-                ctx.translate(185, 185);
-                ctx.rotate(i * arc + arc / 2);
-                ctx.fillStyle = "white";
-                ctx.font = "bold 35px serif";
-                ctx.textAlign = "center";
-                ctx.fillText(s.icon, 130, 15);
-                ctx.restore();
+                ctx.beginPath(); ctx.fillStyle = colors[i]; ctx.moveTo(180, 180);
+                ctx.arc(180, 180, 180, i * arc, (i + 1) * arc); ctx.fill();
+                ctx.save(); ctx.translate(180, 180); ctx.rotate(i * arc + arc / 2);
+                ctx.fillStyle = "white"; ctx.font = "35px serif"; ctx.textAlign = "center";
+                ctx.fillText(s.icon, 130, 12); ctx.restore();
             });
         }
 
         function spin() {
-            document.getElementById('result-box').style.display = 'none';
-            spinSound.play();
-            
-            const extraDegrees = Math.floor(Math.random() * 360) + 3600; 
-            currentAngle += extraDegrees;
-            
-            canvas.style.transition = 'transform 4s cubic-bezier(0.1, 0, 0, 1)';
+            document.getElementById('spinSound').play();
+            let deg = Math.floor(Math.random() * 360) + 7200;
+            currentAngle += deg;
+            canvas.style.transition = '5s cubic-bezier(0.1, 0, 0, 1)';
             canvas.style.transform = `rotate(${currentAngle}deg)`;
-
             setTimeout(() => {
-                spinSound.pause();
-                spinSound.currentTime = 0;
-                winSound.play();
-
-                // To'g'ri hisoblash (O'q (arrow) yuqorida bo'lgani uchun)
-                const actualDegrees = currentAngle % 360;
-                const index = Math.floor((360 - actualDegrees + 270) % 360 / 36);
-                const result = sectors[index];
-                
-                const box = document.getElementById('result-box');
+                document.getElementById('winSound').play();
+                const idx = Math.floor((360 - (currentAngle % 360) + 270) % 360 / 36);
+                const res = sectors[idx];
+                document.getElementById('result-box').style.display = 'block';
                 const title = document.getElementById('res-title');
                 const text = document.getElementById('res-text');
-
-                if (result.type === "q") {
-                    if (questions.length > 0) {
-                        title.innerText = "SAVOL:";
-                        title.style.color = "#00d2ff";
-                        text.innerText = questions.pop();
-                    } else {
-                        title.innerText = "TAMOM!";
-                        text.innerText = "Savollar qolmadi!";
-                    }
+                if(res.type === 'q') {
+                    title.innerText = "SAVOL:"; text.innerText = questions[Math.floor(Math.random()*questions.length)];
+                    title.style.color = "var(--neon-blue)";
                 } else {
-                    title.innerText = result.title;
-                    title.style.color = result.type === "task" ? "#e74c3c" : "#2ecc71";
-                    text.innerText = result.text;
+                    title.innerText = res.title; text.innerText = res.text;
+                    title.style.color = res.type === 'task' ? '#e74c3c' : '#2ecc71';
                 }
-                box.style.display = 'block';
-            }, 4000);
+            }, 5200);
         }
-        draw();
+
+        // --- G'AYRAT TOG'O MEMORY MANTIG'I ---
+        const medicalWords = [
+            {n: "Surgeon", i: "🥼"}, {n: "Kidney", i: "🧼"}, {n: "Liver", i: "🍷"}, {n: "Virus", i: "🦠"},
+            {n: "Cell", i: "🧪"}, {n: "Skull", i: "💀"}, {n: "Injection", i: "💉"}, {n: "Lungs", i: "🫁"},
+            {n: "Blood", i: "🩸"}, {n: "Stethoscope", i: "🩺"}
+        ];
+        let cardsData = [];
+        medicalWords.forEach(w => { cardsData.push({id: w.n, val: w.n}, {id: w.n, val: w.i}); });
+
+        let flipped = [];
+        function resetMemory() {
+            const grid = document.getElementById('grid'); grid.innerHTML = '';
+            cardsData.sort(() => Math.random() - 0.5);
+            cardsData.forEach(d => {
+                const c = document.createElement('div'); c.className = 'card'; c.innerHTML = 'TOG\'O';
+                c.onclick = () => {
+                    if(flipped.length < 2 && !c.classList.contains('flipped')) {
+                        c.classList.add('flipped'); c.innerHTML = d.val; flipped.push({c, d});
+                        if(flipped.length === 2) setTimeout(checkMemory, 800);
+                    }
+                };
+                grid.appendChild(c);
+            });
+        }
+
+        function checkMemory() {
+            if(flipped[0].d.id === flipped[1].d.id) {
+                flipped[0].c.classList.add('matched'); flipped[1].c.classList.add('matched');
+                document.getElementById('winSound').play();
+            } else {
+                flipped[0].c.classList.remove('flipped'); flipped[1].c.classList.remove('flipped');
+                flipped[0].c.innerHTML = 'TOG\'O';
+            }
+            flipped = [];
+        }
+
+        drawWheel(); resetMemory();
     </script>
 </body>
 </html>
+
