@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mikro-G'ildirak</title>
+    <style>
+        /* DIZAYN QISMI */
+        body {
+            background-color: #1a1a2e;
+            color: white;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container { position: relative; width: 320px; height: 320px; }
+        canvas { width: 100%; height: 100%; border-radius: 50%; border: 5px solid #00d4ff; }
+        #btn {
+            margin-top: 20px;
+            padding: 15px 30px;
+            background: #00d4ff;
+            border: none;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .pointer {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0; 
+            height: 0; 
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 30px solid red;
+            z-index: 5;
+        }
+        #text { margin-top: 15px; font-size: 20px; color: #ffeb3b; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <h2 style="color: #00d4ff;">🔬 Mikrobiologiya</h2>
+    <div id="text">Aylantirishni bosing</div>
+
+    <div class="container">
+        <div class="pointer"></div>
+        <canvas id="wheel" width="320" height="320"></canvas>
+    </div>
+
+    <button id="btn" onclick="spinWheel()">AYLANTIRISH</button>
+
+    <script>
+        /* MANTIQ QISMI (JAVASCRIPT) */
+        const canvas = document.getElementById('wheel');
+        const ctx = canvas.getContext('2d');
+        const sectors = ["Bakteriya", "Virus", "Zamburug'", "Antibiotik", "Mikroskop", "Gigiyena", "DNK", "Vaksina"];
+        const colors = ["#2ecc71", "#e74c3c", "#f1c40f", "#9b59b6", "#3498db", "#e67e22", "#1abc9c", "#95a5a6"];
+        
+        let currentAngle = 0;
+        const arc = (2 * Math.PI) / sectors.length;
+
+        function draw() {
+            sectors.forEach((name, i) => {
+                const angle = currentAngle + i * arc;
+                ctx.fillStyle = colors[i];
+                ctx.beginPath();
+                ctx.moveTo(160, 160);
+                ctx.arc(160, 160, 160, angle, angle + arc);
+                ctx.lineTo(160, 160);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.save();
+                ctx.translate(160 + Math.cos(angle + arc/2) * 100, 160 + Math.sin(angle + arc/2) * 100);
+                ctx.rotate(angle + arc/2 + Math.PI/2);
+                ctx.fillStyle = "white";
+                ctx.font = "bold 12px Arial";
+                ctx.fillText(name, -ctx.measureText(name).width/2, 0);
+                ctx.restore();
+            });
+        }
+
+        function spinWheel() {
+            let spinTime = 0;
+            let totalSpinTime = 3000 + Math.random() * 2000;
+            let speed = 0.2 + Math.random() * 0.2;
+
+            function animate() {
+                spinTime += 20;
+                if (spinTime < totalSpinTime) {
+                    currentAngle += speed;
+                    speed *= 0.98; // Sekinlashish
+                    draw();
+                    requestAnimationFrame(animate);
+                } else {
+                    const finalAngle = (currentAngle * 180 / Math.PI + 90) % 360;
+                    const sectorIndex = Math.floor((360 - finalAngle) / (360 / sectors.length)) % sectors.length;
+                    document.getElementById('text').innerText = "Tanlandi: " + sectors[sectorIndex];
+                }
+            }
+            animate();
+        }
+
+        draw();
+    </script>
+</body>
+</html>
+
