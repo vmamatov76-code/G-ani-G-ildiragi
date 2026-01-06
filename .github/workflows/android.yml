@@ -16,8 +16,16 @@ jobs:
       - name: Install Bubblewrap
         run: npm install -g @bubblewrap/cli
 
-      - name: Build APK
+      - name: Build APK with Bubblewrap
         run: |
-          echo "APK yaratish boshlandi..."
-          # Hozircha bu yerda faqat jarayonni tekshiramiz
-          echo "Muvaffaqiyatli yakunlandi!"
+          yes | bubblewrap init --manifest=https://vmamatov76-code.github.io/G-ani-G-ildiragi/manifest.json
+          bubblewrap build --skipSigning
+          mkdir build-artifacts
+          cp *.apk build-artifacts/
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: Mikrobiologiya-Gildiragi-APK
+          path: build-artifacts/*.apk
+
